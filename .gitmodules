@@ -1,0 +1,4 @@
+[submodule "interhi"]
+	path = interhi
+	url = git@git.vauxoo.com:vauxoo/interhi.git
+	branch = 16.0
