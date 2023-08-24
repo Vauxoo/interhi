@@ -2,3 +2,7 @@
 	path = interhi
 	url = git@git.vauxoo.com:vauxoo/interhi.git
 	branch = 16.0
+[submodule "l10n-mx-edi-factoring"]
+	path = l10n-mx-edi-factoring
+	url = git@git.vauxoo.com:mexico/l10n-mx-edi-factoring.git
+	branch = 16.0
