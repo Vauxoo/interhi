@@ -2,3 +2,7 @@
 	path = interhi
 	url = git@git.vauxoo.com:vauxoo/interhi.git
 	branch = 16.0
+[submodule "connector"]
+	path = connector
+	url = git@github.com:Vauxoo/connector.git
+	branch = 16.0
