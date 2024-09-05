@@ -30,3 +30,8 @@
 	path = l10n-mx-edi-related-documents
 	url = git@git.vauxoo.com:mexico/l10n-mx-edi-related-documents.git
 	branch = 16.0
+
+[submodule "stock_warehouse_availability_update"]
+	path = stock_warehouse_availability_update
+	url = git@github.com:liklee-it/interhi.com.git
+	branch = main
