@@ -35,3 +35,7 @@
 	path = stock_warehouse_availability_update
 	url = git@github.com:liklee-it/interhi.com.git
 	branch = main
+[submodule "sale-self-invoice"]
+	path = sale-self-invoice
+	url = git@git.vauxoo.com:vauxoo/sale-self-invoice.git
+	branch = 16.0
