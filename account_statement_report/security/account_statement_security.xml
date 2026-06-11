@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+
+    <record id="group_account_statement_all" model="res.groups">
+        <field name="name">Estado de cuenta: ver todos los vendedores</field>
+        <field name="category_id" ref="base.module_category_accounting_accounting"/>
+        <field name="comment">
+            Permite generar el estado de cuenta de todos los vendedores y clientes.
+            Sin este grupo, el usuario solo puede generar el reporte de sus
+            propios clientes.
+        </field>
+    </record>
+
+    <!-- Los responsables de contabilidad ven a todos los vendedores. -->
+    <record id="account.group_account_manager" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('account_statement_report.group_account_statement_all'))]"/>
+    </record>
+
+</odoo>

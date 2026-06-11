@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_account_statement_wizard_user,account.statement.wizard.user,model_account_statement_wizard,base.group_user,1,1,1,1
+access_account_statement_config_manager,account.statement.config.manager,model_account_statement_config,account_statement_report.group_account_statement_all,1,1,1,1

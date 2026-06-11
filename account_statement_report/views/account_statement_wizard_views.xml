@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_account_statement_wizard_form" model="ir.ui.view">
+        <field name="name">account.statement.wizard.form</field>
+        <field name="model">account.statement.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Estado de cuenta de clientes">
+                <field name="can_see_all" invisible="1"/>
+                <div class="oe_title mb-3">
+                    <h2 style="color:#1f3864;">
+                        <i class="fa fa-file-text-o me-2"/>Estado de cuenta de clientes
+                    </h2>
+                    <p class="text-muted">
+                        Genera la antigüedad de saldos de clientes (facturas con saldo
+                        pendiente) a una fecha de corte, en PDF o Excel.
+                    </p>
+                </div>
+                <group>
+                    <group string="Alcance" name="alcance">
+                        <field name="statement_date"/>
+                        <field name="report_scope" widget="radio"
+                               attrs="{'invisible': [('can_see_all', '=', False)], 'readonly': [('can_see_all', '=', False)]}"/>
+                        <div class="text-muted"
+                             attrs="{'invisible': [('can_see_all', '=', True)]}">
+                            <i class="fa fa-lock me-1"/>Solo tus propios clientes
+                        </div>
+                        <field name="salesperson_id"
+                               options="{'no_create': True, 'no_open': True}"
+                               attrs="{'invisible': [('report_scope', '!=', 'single')], 'required': [('report_scope', '=', 'single')], 'readonly': [('can_see_all', '=', False)]}"/>
+                    </group>
+                    <group string="Filtros" name="filtros">
+                        <field name="only_overdue"/>
+                        <field name="min_overdue_days" placeholder="0 = sin filtro"/>
+                        <field name="order_by"/>
+                    </group>
+                </group>
+                <group string="Formato de salida" name="salida">
+                    <field name="output_format" widget="radio"
+                           options="{'horizontal': true}" nolabel="1"/>
+                </group>
+                <footer>
+                    <button name="action_generate" string="Generar reporte"
+                            type="object" class="btn-primary"
+                            icon="fa-download"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_account_statement_wizard" model="ir.actions.act_window">
+        <field name="name">Estado de cuenta de clientes</field>
+        <field name="res_model">account.statement.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_account_statement_report"
+              name="Estado de cuenta de clientes"
+              parent="account.menu_finance_reports"
+              action="action_account_statement_wizard"
+              sequence="99"/>
+
+</odoo>
