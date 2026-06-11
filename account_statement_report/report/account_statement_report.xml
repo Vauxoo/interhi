@@ -26,6 +26,9 @@
     </record>
 
     <template id="report_account_statement">
+        <!-- full_width => el <body> usa .container-fluid (100%) en vez de .container
+             (max-width fijo), necesario para que el contenido llene la hoja horizontal. -->
+        <t t-set="full_width" t-value="True"/>
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-set="data" t-value="o._build_report_data()"/>
@@ -78,7 +81,6 @@
                             </div>
                             <div class="col-5 text-end">
                                 <span class="fw-bold">Atraso:</span>
-                                <span class="px-2" style="background-color:#C6EFCE;">≤ 0</span>
                                 <span class="px-2" style="background-color:#FFEB9C;">1-30</span>
                                 <span class="px-2" style="background-color:#F8CBAD;">31-60</span>
                                 <span class="px-2" style="background-color:#FFC7CE;">+60</span>
@@ -92,14 +94,14 @@
                                     style="background-color:#1f3864; color:white; font-size: 13px;">
                                     Vendedor: <span t-out="g['name']"/>
                                 </h4>
-                                <table class="table table-sm table-bordered mb-1">
+                                <table class="table table-sm table-bordered mb-1" style="width:100%;">
                                     <thead>
                                         <tr class="text-center" style="background-color:#D9E1F2;">
                                             <th>FACTURA</th>
                                             <th>CLIENTE</th>
                                             <th>FECHA FACT</th>
                                             <th>FECHA VENC.</th>
-                                            <th>FECHA EDO. CUENTA</th>
+                                            <th>FECHA DE CORTE</th>
                                             <th>DÍAS DE ATRASO</th>
                                             <th class="text-end">MONTO</th>
                                         </tr>
@@ -114,7 +116,7 @@
                                                     <td class="text-center" t-out="l['fecha_venc']"/>
                                                     <td class="text-center" t-out="l['fecha_corte']"/>
                                                     <td class="text-center fw-bold"
-                                                        t-attf-style="background-color:#{l['color']};"
+                                                        t-attf-style="#{('background-color:' + l['color'] + ';') if l['color'] else ''}"
                                                         t-out="l['dias']"/>
                                                     <td class="text-end">
                                                         <span t-out="l['monto']"
@@ -124,7 +126,7 @@
                                             </t>
                                             <tr class="fw-bold" style="background-color:#F2F2F2;">
                                                 <td colspan="6" class="text-end">
-                                                    Subtotal <span t-out="c['name']"/>
+                                                    Total <span t-out="c['name']"/>
                                                 </td>
                                                 <td class="text-end">
                                                     <span t-out="c['subtotal']"
@@ -147,7 +149,7 @@
                         </t>
 
                         <!-- ============ Total general ============ -->
-                        <table class="table table-sm mt-2">
+                        <table class="table table-sm mt-2" style="width:100%;">
                             <tr class="fw-bold" style="background-color:#FFE699; font-size: 13px;">
                                 <td class="text-end">TOTAL GENERAL</td>
                                 <td class="text-end" style="width:18%;">

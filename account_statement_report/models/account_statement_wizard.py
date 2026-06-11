@@ -17,9 +17,9 @@ except ImportError:  # pragma: no cover
 
 GROUP_ALL = "account_statement_report.group_account_statement_all"
 
-# Semáforo de atraso: (límite superior de días, color de fondo, etiqueta)
+# Semáforo de atraso: (límite superior de días, color de fondo)
 AGING_COLORS = (
-    (0, "#C6EFCE"),    # al corriente / por vencer (días <= 0)
+    (0, ""),           # al corriente / por vencer (días <= 0): sin color
     (30, "#FFEB9C"),   # 1 - 30 días
     (60, "#F8CBAD"),   # 31 - 60 días
     (None, "#FFC7CE"),  # más de 60 días
@@ -81,16 +81,15 @@ class AccountStatementWizard(models.TransientModel):
         required=True,
         default="pdf",
     )
-    can_see_all = fields.Boolean(compute="_compute_can_see_all")
+    # Valor por defecto (no computado) para que esté disponible al abrir el
+    # asistente, en default_get, antes de renderizar el formulario. Así los
+    # attrs de la vista no "parpadean" hasta después de pulsar el botón.
+    can_see_all = fields.Boolean(
+        default=lambda self: self.env.user.has_group(GROUP_ALL),
+    )
 
     xlsx_file = fields.Binary(string="Archivo Excel", readonly=True)
     xlsx_filename = fields.Char(readonly=True)
-
-    @api.depends_context("uid")
-    def _compute_can_see_all(self):
-        can = self.env.user.has_group(GROUP_ALL)
-        for wiz in self:
-            wiz.can_see_all = can
 
     @api.model
     def default_get(self, fields_list):
@@ -306,12 +305,13 @@ class AccountStatementWizard(models.TransientModel):
         total_money = workbook.add_format(
             {"bold": True, "border": 1, "num_format": money_fmt, "bg_color": "#FFE699"}
         )
-        # Semáforo de atraso: un formato por color.
+        # Semáforo de atraso: un formato por color (los días <= 0 van sin relleno).
         aging_fmts = {
             color: workbook.add_format(
                 {"border": 1, "align": "center", "bg_color": color}
             )
             for _limit, color in AGING_COLORS
+            if color
         }
 
         sheet = workbook.add_worksheet("Estado de cuenta")
@@ -338,7 +338,7 @@ class AccountStatementWizard(models.TransientModel):
             "CLIENTE",
             "FECHA FACT",
             "FECHA VENC.",
-            "FECHA ESTADO DE CUENTA",
+            "FECHA DE CORTE",
             "DIAS DE ATRASO",
             "MONTO",
         ]
@@ -363,7 +363,7 @@ class AccountStatementWizard(models.TransientModel):
                     row += 1
                 sheet.merge_range(
                     row, 0, row, 5,
-                    "Subtotal %s" % client["name"], cli_sub_lbl,
+                    "Total %s" % client["name"], cli_sub_lbl,
                 )
                 sheet.write_number(row, 6, client["subtotal"], cli_sub_money)
                 row += 1
