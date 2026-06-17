@@ -20,9 +20,8 @@ GROUP_ALL = "account_statement_report.group_account_statement_all"
 # Semáforo de atraso: (límite superior de días, color de fondo)
 AGING_COLORS = (
     (0, ""),           # al corriente / por vencer (días <= 0): sin color
-    (30, "#FFEB9C"),   # 1 - 30 días
-    (60, "#F8CBAD"),   # 31 - 60 días
-    (None, "#FFC7CE"),  # más de 60 días
+    (14, "#FFEB9C"),   # 1 - 14 días: amarillo
+    (None, "#FFC7CE"),  # 15 días o más: rojo
 )
 
 
@@ -43,6 +42,14 @@ class AccountStatementWizard(models.TransientModel):
         default=fields.Date.context_today,
         help="Fecha de corte usada para calcular los días de atraso.",
     )
+    group_by = fields.Selection(
+        [("salesperson", "Por vendedor"), ("partner", "Por cliente")],
+        string="Agrupar",
+        required=True,
+        default="salesperson",
+        help="Define el agrupamiento principal del reporte: por vendedor "
+        "(y dentro por cliente) o por cliente (y dentro por vendedor).",
+    )
     report_scope = fields.Selection(
         [("all", "Todos los vendedores"), ("single", "Un vendedor")],
         string="Alcance",
@@ -53,6 +60,11 @@ class AccountStatementWizard(models.TransientModel):
         "res.users",
         string="Vendedor",
         domain="[('share', '=', False)]",
+    )
+    partner_id = fields.Many2one(
+        "res.partner",
+        string="Cliente",
+        help="Opcional: limita el reporte a un único cliente.",
     )
     only_overdue = fields.Boolean(
         string="Solo facturas vencidas",
@@ -130,9 +142,14 @@ class AccountStatementWizard(models.TransientModel):
             domain.append(("invoice_user_id", "=", self.env.user.id))
         elif self.report_scope == "single" and self.salesperson_id:
             domain.append(("invoice_user_id", "=", self.salesperson_id.id))
-        return self.env["account.move"].search(
-            domain, order="invoice_user_id, partner_id, invoice_date, name"
+        if self.partner_id:
+            domain.append(("partner_id", "=", self.partner_id.id))
+        order = (
+            "partner_id, invoice_user_id, invoice_date, name"
+            if self.group_by == "partner"
+            else "invoice_user_id, partner_id, invoice_date, name"
         )
+        return self.env["account.move"].search(domain, order=order)
 
     def _line_sort_key(self):
         return {
@@ -145,6 +162,7 @@ class AccountStatementWizard(models.TransientModel):
         self.ensure_one()
         self._check_access_scope()
         cutoff = self.statement_date
+        by_partner = self.group_by == "partner"
         groups = OrderedDict()
         count = 0
         for move in self._get_moves():
@@ -155,21 +173,25 @@ class AccountStatementWizard(models.TransientModel):
             if self.min_overdue_days and days < self.min_overdue_days:
                 continue
             sp = move.invoice_user_id
-            group = groups.setdefault(
-                sp.id or 0,
-                {
-                    "name": sp.name or _("Sin vendedor"),
-                    "clients": OrderedDict(),
-                    "subtotal": 0.0,
-                },
-            )
             partner = move.partner_id
-            client = group["clients"].setdefault(
-                partner.id,
-                {"name": partner.name or "", "lines": [], "subtotal": 0.0},
+            # El nivel superior (group) y el inferior (subgrupo) se invierten
+            # según el agrupamiento elegido.
+            if by_partner:
+                top, top_name = partner, partner.name or ""
+                sub, sub_name = sp, (sp.name or _("Sin vendedor"))
+            else:
+                top, top_name = sp, (sp.name or _("Sin vendedor"))
+                sub, sub_name = partner, partner.name or ""
+            group = groups.setdefault(
+                top.id or 0,
+                {"name": top_name, "clients": OrderedDict(), "subtotal": 0.0},
+            )
+            subgroup = group["clients"].setdefault(
+                sub.id or 0,
+                {"name": sub_name, "lines": [], "subtotal": 0.0},
             )
             amount = move.amount_residual_signed
-            client["lines"].append(
+            subgroup["lines"].append(
                 {
                     "factura": move.name,
                     "fecha_fact": move.invoice_date,
@@ -180,14 +202,14 @@ class AccountStatementWizard(models.TransientModel):
                     "monto": amount,
                 }
             )
-            client["subtotal"] += amount
+            subgroup["subtotal"] += amount
             group["subtotal"] += amount
             count += 1
 
         sort_key = self._line_sort_key()
         for group in groups.values():
-            for client in group["clients"].values():
-                client["lines"].sort(key=sort_key)
+            for subgroup in group["clients"].values():
+                subgroup["lines"].sort(key=sort_key)
 
         total = sum(g["subtotal"] for g in groups.values())
         return {
@@ -197,6 +219,9 @@ class AccountStatementWizard(models.TransientModel):
             "user": self.env.user,
             "print_date": fields.Date.context_today(self),
             "scope": "single" if not self.can_see_all else self.report_scope,
+            "group_by": self.group_by,
+            "group_label": _("Cliente") if by_partner else _("Vendedor"),
+            "subgroup_label": _("Vendedor") if by_partner else _("Cliente"),
             "only_overdue": self.only_overdue,
             "min_overdue_days": self.min_overdue_days,
             "order_label": dict(
@@ -225,8 +250,13 @@ class AccountStatementWizard(models.TransientModel):
 
     def _report_basename(self):
         self.ensure_one()
-        who = self.salesperson_id.name if self.report_scope == "single" and self.salesperson_id else "Todos"
-        slug = "".join(c if c.isalnum() else "_" for c in who)
+        if self.partner_id:
+            who = self.partner_id.name
+        elif self.report_scope == "single" and self.salesperson_id:
+            who = self.salesperson_id.name
+        else:
+            who = "Todos"
+        slug = "".join(c if c.isalnum() else "_" for c in who or "")
         return "Estado_de_cuenta_%s_%s" % (slug, self.statement_date or "")
 
     def _render_xlsx_bytes(self, data=None):
@@ -335,13 +365,14 @@ class AccountStatementWizard(models.TransientModel):
 
         columns = [
             "FACTURA",
-            "CLIENTE",
+            (data.get("subgroup_label") or "Cliente").upper(),
             "FECHA FACT",
             "FECHA VENC.",
             "FECHA DE CORTE",
             "DIAS DE ATRASO",
             "MONTO",
         ]
+        group_label = data.get("group_label") or "Vendedor"
 
         for group in data["groups"]:
             sheet.merge_range(row, 0, row, 6, group["name"], sp_fmt)
@@ -369,7 +400,7 @@ class AccountStatementWizard(models.TransientModel):
                 row += 1
             sheet.merge_range(
                 row, 0, row, 5,
-                "Total vendedor %s" % group["name"], sp_sub_lbl,
+                "Total %s %s" % (group_label.lower(), group["name"]), sp_sub_lbl,
             )
             sheet.write_number(row, 6, group["subtotal"], sp_sub_money)
             row += 2

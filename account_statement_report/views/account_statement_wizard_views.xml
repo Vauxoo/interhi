@@ -19,6 +19,7 @@
                 <group>
                     <group string="Alcance" name="alcance">
                         <field name="statement_date"/>
+                        <field name="group_by" widget="radio"/>
                         <field name="report_scope" widget="radio"
                                attrs="{'invisible': [('can_see_all', '=', False)], 'readonly': [('can_see_all', '=', False)]}"/>
                         <div class="text-muted"
@@ -28,6 +29,8 @@
                         <field name="salesperson_id"
                                options="{'no_create': True, 'no_open': True}"
                                attrs="{'invisible': [('report_scope', '!=', 'single')], 'required': [('report_scope', '=', 'single')], 'readonly': [('can_see_all', '=', False)]}"/>
+                        <field name="partner_id"
+                               options="{'no_create': True, 'no_open': True}"/>
                     </group>
                     <group string="Filtros" name="filtros">
                         <field name="only_overdue"/>

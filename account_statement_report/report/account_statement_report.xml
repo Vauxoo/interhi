@@ -81,9 +81,8 @@
                             </div>
                             <div class="col-5 text-end">
                                 <span class="fw-bold">Atraso:</span>
-                                <span class="px-2" style="background-color:#FFEB9C;">1-30</span>
-                                <span class="px-2" style="background-color:#F8CBAD;">31-60</span>
-                                <span class="px-2" style="background-color:#FFC7CE;">+60</span>
+                                <span class="px-2" style="background-color:#FFEB9C;">1-14 días</span>
+                                <span class="px-2" style="background-color:#FFC7CE;">15 días o más</span>
                             </div>
                         </div>
 
@@ -92,13 +91,13 @@
                             <div t-attf-style="page-break-before: #{'always' if not g_first else 'auto'};">
                                 <h4 class="mt-2 mb-1 p-1"
                                     style="background-color:#1f3864; color:white; font-size: 13px;">
-                                    Vendedor: <span t-out="g['name']"/>
+                                    <span t-out="data['group_label']"/>: <span t-out="g['name']"/>
                                 </h4>
                                 <table class="table table-sm table-bordered mb-1" style="width:100%;">
                                     <thead>
                                         <tr class="text-center" style="background-color:#D9E1F2;">
                                             <th>FACTURA</th>
-                                            <th>CLIENTE</th>
+                                            <th><span t-out="data['subgroup_label'].upper()"/></th>
                                             <th>FECHA FACT</th>
                                             <th>FECHA VENC.</th>
                                             <th>FECHA DE CORTE</th>
@@ -136,7 +135,7 @@
                                         </t>
                                         <tr class="fw-bold" style="background-color:#D9E1F2;">
                                             <td colspan="6" class="text-end">
-                                                Total vendedor <span t-out="g['name']"/>
+                                                Total <span t-out="data['group_label'].lower()"/> <span t-out="g['name']"/>
                                             </td>
                                             <td class="text-end">
                                                 <span t-out="g['subtotal']"
