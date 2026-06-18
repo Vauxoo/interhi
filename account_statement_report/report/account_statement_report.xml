@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="paperformat_account_statement" model="report.paperformat">
+        <field name="name">Estado de cuenta (horizontal)</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">12</field>
+        <field name="margin_bottom">12</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">8</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_account_statement" model="ir.actions.report">
+        <field name="name">Estado de cuenta de clientes</field>
+        <field name="model">account.statement.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">account_statement_report.report_account_statement</field>
+        <field name="report_file">account_statement_report.report_account_statement</field>
+        <field name="paperformat_id" ref="paperformat_account_statement"/>
+        <field name="print_report_name">'Estado de cuenta - %s' % (object.statement_date or '')</field>
+    </record>
+
+    <template id="report_account_statement">
+        <!-- full_width => el <body> usa .container-fluid (100%) en vez de .container
+             (max-width fijo), necesario para que el contenido llene la hoja horizontal. -->
+        <t t-set="full_width" t-value="True"/>
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="data" t-value="o._build_report_data()"/>
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-size: 12px;">
+
+                        <!-- ============ Encabezado ============ -->
+                        <div class="row mb-2">
+                            <div class="col-7">
+                                <img t-if="data['company'].logo"
+                                     t-att-src="image_data_uri(data['company'].logo)"
+                                     style="max-height: 55px; max-width: 240px;"
+                                     alt="Logo"/>
+                                <div class="mt-1" style="font-size: 11px; color:#444;">
+                                    <strong t-out="data['company'].name"/>
+                                    <span t-if="data['company'].vat"> · RFC: <span t-out="data['company'].vat"/></span>
+                                </div>
+                            </div>
+                            <div class="col-5 text-end">
+                                <h3 class="mb-1" style="color:#1f3864;">Estado de cuenta de clientes</h3>
+                                <table class="table table-sm table-borderless mb-0"
+                                       style="font-size: 11px;">
+                                    <tr>
+                                        <td class="text-end fw-bold py-0" style="width:55%;">Fecha de corte:</td>
+                                        <td class="text-end py-0"><span t-out="data['cutoff']"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end fw-bold py-0">Facturas:</td>
+                                        <td class="text-end py-0"><span t-out="data['invoice_count']"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end fw-bold py-0">Generado por:</td>
+                                        <td class="text-end py-0">
+                                            <span t-out="data['user'].name"/> · <span t-out="data['print_date']"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Filtros aplicados + leyenda del semáforo -->
+                        <div class="row mb-3" style="font-size: 10px;">
+                            <div class="col-7">
+                                <span class="fw-bold">Filtros:</span>
+                                <span t-if="data['only_overdue']" class="badge bg-secondary">Solo vencidas</span>
+                                <span t-if="data['min_overdue_days']" class="badge bg-secondary">
+                                    Atraso ≥ <span t-out="data['min_overdue_days']"/> días
+                                </span>
+                                <span class="badge bg-light text-dark border">Orden: <span t-out="data['order_label']"/></span>
+                            </div>
+                            <div class="col-5 text-end">
+                                <span class="fw-bold">Atraso:</span>
+                                <span class="px-2" style="background-color:#FFEB9C;">1-14 días</span>
+                                <span class="px-2" style="background-color:#FFC7CE;">15 días o más</span>
+                            </div>
+                        </div>
+
+                        <!-- ============ Un bloque por vendedor ============ -->
+                        <t t-foreach="data['groups']" t-as="g">
+                            <div t-attf-style="page-break-before: #{'always' if not g_first else 'auto'};">
+                                <h4 class="mt-2 mb-1 p-1"
+                                    style="background-color:#1f3864; color:white; font-size: 13px;">
+                                    <span t-out="data['group_label']"/>: <span t-out="g['name']"/>
+                                </h4>
+                                <table class="table table-sm table-bordered mb-1" style="width:100%;">
+                                    <thead>
+                                        <tr class="text-center" style="background-color:#D9E1F2;">
+                                            <th>FACTURA</th>
+                                            <th><span t-out="data['subgroup_label'].upper()"/></th>
+                                            <th>FECHA FACT</th>
+                                            <th>FECHA VENC.</th>
+                                            <th>FECHA DE CORTE</th>
+                                            <th>DÍAS DE ATRASO</th>
+                                            <th class="text-end">MONTO</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="g['clients'].values()" t-as="c">
+                                            <t t-foreach="c['lines']" t-as="l">
+                                                <tr>
+                                                    <td t-out="l['factura']"/>
+                                                    <td t-out="c['name']"/>
+                                                    <td class="text-center" t-out="l['fecha_fact']"/>
+                                                    <td class="text-center" t-out="l['fecha_venc']"/>
+                                                    <td class="text-center" t-out="l['fecha_corte']"/>
+                                                    <td class="text-center fw-bold"
+                                                        t-attf-style="#{('background-color:' + l['color'] + ';') if l['color'] else ''}"
+                                                        t-out="l['dias']"/>
+                                                    <td class="text-end">
+                                                        <span t-out="l['monto']"
+                                                              t-options="{'widget': 'monetary', 'display_currency': data['currency']}"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                            <tr class="fw-bold" style="background-color:#F2F2F2;">
+                                                <td colspan="6" class="text-end">
+                                                    Total <span t-out="c['name']"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-out="c['subtotal']"
+                                                          t-options="{'widget': 'monetary', 'display_currency': data['currency']}"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <tr class="fw-bold" style="background-color:#D9E1F2;">
+                                            <td colspan="6" class="text-end">
+                                                Total <span t-out="data['group_label'].lower()"/> <span t-out="g['name']"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="g['subtotal']"
+                                                      t-options="{'widget': 'monetary', 'display_currency': data['currency']}"/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+
+                        <!-- ============ Total general ============ -->
+                        <table class="table table-sm mt-2" style="width:100%;">
+                            <tr class="fw-bold" style="background-color:#FFE699; font-size: 13px;">
+                                <td class="text-end">TOTAL GENERAL</td>
+                                <td class="text-end" style="width:18%;">
+                                    <span t-out="data['total']"
+                                          t-options="{'widget': 'monetary', 'display_currency': data['currency']}"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p t-if="not data['groups']" class="text-center text-muted mt-4">
+                            No se encontraron facturas con saldo pendiente para los filtros seleccionados.
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

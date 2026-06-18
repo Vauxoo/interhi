@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_account_statement_config_form" model="ir.ui.view">
+        <field name="name">account.statement.config.form</field>
+        <field name="model">account.statement.config</field>
+        <field name="arch" type="xml">
+            <form string="Envío recurrente del estado de cuenta">
+                <div class="oe_title mb-3">
+                    <h2 style="color:#1f3864;">
+                        <i class="fa fa-envelope-o me-2"/>Envío recurrente del estado de cuenta
+                    </h2>
+                    <p class="text-muted">
+                        Envía por correo, de forma automática, el estado de cuenta a cada
+                        vendedor (PDF + Excel). Requiere un servidor de correo saliente configurado.
+                    </p>
+                </div>
+                <group>
+                    <group string="Programación" name="prog">
+                        <field name="auto_send"/>
+                        <field name="frequency"/>
+                        <field name="weekday"
+                               attrs="{'invisible': [('frequency', '!=', 'weekly')]}"/>
+                    </group>
+                    <group string="Destinatarios" name="dest">
+                        <field name="salesperson_ids" widget="many2many_tags"
+                               options="{'no_create': True}"
+                               placeholder="Vacío = todos los vendedores activos con correo"/>
+                        <field name="admin_user_id"
+                               options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_save" string="Guardar"
+                            type="object" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_account_statement_config" model="ir.actions.act_window">
+        <field name="name">Envío recurrente del estado de cuenta</field>
+        <field name="res_model">account.statement.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_account_statement_config"
+              name="Envío recurrente del estado de cuenta"
+              parent="account.menu_finance_configuration"
+              action="action_account_statement_config"
+              sequence="99"/>
+
+</odoo>
