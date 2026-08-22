@@ -1,0 +1,40 @@
+[submodule "interhi"]
+	path = interhi
+	url = git@git.vauxoo.com:vauxoo/interhi.git
+	branch = 19.0-mig-interhi-CLaurelB
+[submodule "l10n-mx-edi-advance"]
+	path = l10n-mx-edi-advance
+	url = git@git.vauxoo.com:mexico/l10n-mx-edi-advance.git
+	branch = 19.0
+[submodule "l10n-mx-edi-cancellation"]
+	path = l10n-mx-edi-cancellation
+	url = git@git.vauxoo.com:mexico/l10n-mx-edi-cancellation.git
+	branch = 19.0
+[submodule "l10n-mx-edi-factoring"]
+	path = l10n-mx-edi-factoring
+	url = git@git.vauxoo.com:mexico/l10n-mx-edi-factoring.git
+	branch = 19.0
+[submodule "l10n-mx-edi-payment-split"]
+	path = l10n-mx-edi-payment-split
+	url = git@git.vauxoo.com:mexico/l10n-mx-edi-payment-split.git
+	branch = 19.0
+[submodule "sale-self-invoice"]
+	path = sale-self-invoice
+	url = git@git.vauxoo.com:vauxoo/sale-self-invoice.git
+	branch = 19.0
+[submodule "l10n-edi-discount"]
+	path = l10n-edi-discount
+	url = git@git.vauxoo.com:vauxoo/l10n-edi-discount.git
+	branch = 19.0
+[submodule "l10n-mx-edi-related-documents"]
+	path = l10n-mx-edi-related-documents
+	url = git@git.vauxoo.com:mexico/l10n-mx-edi-related-documents.git
+	branch = 19.0
+[submodule "account-payment-split"]
+	path = account-payment-split
+	url = git@git.vauxoo.com:vauxoo/account-payment-split.git
+	branch = 19.0
+[submodule "connector"]
+	path = connector
+	url = git@github.com:Vauxoo/connector.git
+	branch = 19.0
