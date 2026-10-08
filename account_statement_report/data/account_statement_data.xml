@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Plantilla de correo para el envío recurrente -->
+    <record id="mail_template_account_statement" model="mail.template">
+        <field name="name">Estado de cuenta de clientes (envío recurrente)</field>
+        <field name="model_id" ref="model_account_statement_wizard"/>
+        <field name="subject">Estado de cuenta de clientes — {{ object.salesperson_id.name or 'Todos los vendedores' }} — corte {{ object.statement_date }}</field>
+        <field name="email_from">{{ (object.env.company.email or user.email_formatted) }}</field>
+        <field name="body_html" type="html">
+            <div style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#333;">
+                <p>Hola <t t-out="object.salesperson_id.name or 'equipo'"></t>,</p>
+                <p>
+                    Adjunto encontrarás el <strong>estado de cuenta de clientes</strong>
+                    con fecha de corte <strong t-out="object.statement_date or ''"></strong>,
+                    en formato PDF y Excel.
+                </p>
+                <p style="color:#555;">
+                    Incluye las facturas con saldo pendiente, sus días de atraso y los
+                    subtotales por cliente.
+                </p>
+                <p style="margin-top:18px;color:#888;font-size:12px;">
+                    Mensaje automático · <t t-out="object.env.company.name or ''"></t>
+                </p>
+            </div>
+        </field>
+        <field name="lang">{{ object.env.lang }}</field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Acción planificada (apagada por defecto; corre diario y filtra semanal en código) -->
+    <record id="ir_cron_send_statements" model="ir.cron">
+        <field name="name">Estado de cuenta: envío recurrente a vendedores</field>
+        <field name="model_id" ref="model_account_statement_wizard"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_send_statements()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="False"/>
+        <field name="nextcall" eval="(DateTime.now().replace(hour=13, minute=0, second=0) + timedelta(days=1))"/>
+    </record>
+
+</odoo>
